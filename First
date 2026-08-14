@@ -1,0 +1,2000 @@
+fastdownloader/
+├── app/
+│   ├── (auth)/
+│   │   ├── login/
+│   │   │   └── page.tsx
+│   │   ├── register/
+│   │   │   └── page.tsx
+│   │   └── layout.tsx
+│   ├── (dashboard)/
+│   │   ├── dashboard/
+│   │   │   ├── page.tsx
+│   │   │   └── components/
+│   │   ├── history/
+│   │   │   └── page.tsx
+│   │   └── settings/
+│   │       └── page.tsx
+│   ├── api/
+│   │   ├── analyze/
+│   │   │   └── route.ts
+│   │   ├── download/
+│   │   │   ├── route.ts
+│   │   │   └── [id]/
+│   │   │       └── route.ts
+│   │   ├── history/
+│   │   │   └── route.ts
+│   │   ├── auth/
+│   │   │   ├── [...nextauth]/
+│   │   │   │   └── route.ts
+│   │   │   └── register/
+│   │   │       └── route.ts
+│   │   └── webhooks/
+│   │       └── route.ts
+│   ├── admin/
+│   │   └── page.tsx
+│   ├── layout.tsx
+│   ├── page.tsx
+│   └── globals.css
+├── components/
+│   ├── ui/
+│   │   ├── Button.tsx
+│   │   ├── Card.tsx
+│   │   ├── Input.tsx
+│   │   ├── Select.tsx
+│   │   ├── LoadingSpinner.tsx
+│   │   └── AdSlot.tsx
+│   ├── hero/
+│   │   ├── HeroSection.tsx
+│   │   └── HeroBackground.tsx
+│   ├── url-input/
+│   │   ├── UrlInput.tsx
+│   │   └── PlatformBadge.tsx
+│   ├── processing/
+│   │   └── ProcessingCard.tsx
+│   ├── result/
+│   │   └── ResultCard.tsx
+│   ├── faq/
+│   │   └── FAQSection.tsx
+│   ├── dashboard/
+│   │   ├── DashboardStats.tsx
+│   │   ├── HistoryTable.tsx
+│   │   └── UsageChart.tsx
+│   └── layout/
+│       ├── Header.tsx
+│       ├── Footer.tsx
+│       └── Sidebar.tsx
+├── lib/
+│   ├── auth/
+│   │   ├── auth.config.ts
+│   │   └── auth.ts
+│   ├── db/
+│   │   └── prisma.ts
+│   ├── redis/
+│   │   └── client.ts
+│   ├── queue/
+│   │   ├── index.ts
+│   │   └── workers.ts
+│   ├── providers/
+│   │   ├── base-provider.ts
+│   │   ├── youtube-provider.ts
+│   │   ├── instagram-provider.ts
+│   │   └── index.ts
+│   ├── storage/
+│   │   └── s3-storage.ts
+│   ├── rate-limit/
+│   │   └── index.ts
+│   ├── validation/
+│   │   └── schemas.ts
+│   └── utils/
+│       ├── logger.ts
+│       └── helpers.ts
+├── server/
+│   ├── services/
+│   │   ├── download.service.ts
+│   │   └── history.service.ts
+│   └── controllers/
+│       └── download.controller.ts
+├── workers/
+│   └── download-worker.ts
+├── prisma/
+│   ├── schema.prisma
+│   └── seed.ts
+├── public/
+│   ├── favicon.ico
+│   └── robots.txt
+├── docker/
+│   ├── Dockerfile
+│   └── docker-compose.yml
+├── types/
+│   └── index.ts
+├── middleware.ts
+├── next.config.js
+├── tailwind.config.js
+├── package.json
+├── .env.example
+├── tsconfig.json
+└── README.md
+
+{
+  "name": "fastdownloader",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:push": "prisma db push",
+    "db:generate": "prisma generate",
+    "db:seed": "ts-node prisma/seed.ts",
+    "worker": "ts-node workers/download-worker.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.554.0",
+    "@aws-sdk/s3-request-presigner": "^3.554.0",
+    "@prisma/client": "^5.12.1",
+    "@t3-oss/env-nextjs": "^0.10.1",
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.5",
+    "bcrypt": "^5.1.1",
+    "bullmq": "^5.7.8",
+    "clsx": "^2.1.0",
+    "framer-motion": "^11.0.24",
+    "ioredis": "^5.3.2",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.365.0",
+    "next": "14.1.4",
+    "next-auth": "^4.24.7",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.51.2",
+    "react-hot-toast": "^2.4.1",
+    "react-select": "^5.8.0",
+    "tailwind-merge": "^2.2.1",
+    "uuid": "^9.0.1",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.5",
+    "@types/react": "^18.2.74",
+    "@types/react-dom": "^18.2.24",
+    "@types/uuid": "^9.0.8",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "prisma": "^5.12.1",
+    "tailwindcss": "^3.4.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String           @id @default(cuid())
+  email           String           @unique
+  name            String?
+  password        String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  downloadJobs    DownloadJob[]
+  downloadHistory DownloadHistory[]
+  usageLimits     UsageLimit?
+  role            UserRole         @default(USER)
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model DownloadJob {
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: CASCADE)
+  sourceUrl     String
+  platform      Platform
+  quality       String?
+  format        String?
+  status        JobStatus      @default(PENDING)
+  providerJobId String?
+  downloadUrl   String?
+  expiresAt     DateTime?
+  error         String?
+  metadata      Json?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([platform])
+}
+
+model DownloadHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: CASCADE)
+  jobId     String?
+  platform  Platform
+  title     String?
+  thumbnail String?
+  duration  String?
+  quality   String
+  format    String
+  size      Int?
+  status    HistoryStatus @default(COMPLETED)
+  createdAt DateTime     @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model UsageLimit {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: CASCADE)
+  dailyLimit   Int      @default(20)
+  monthlyLimit Int      @default(500)
+  dailyUsed    Int      @default(0)
+  monthlyUsed  Int      @default(0)
+  lastReset    DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+enum Platform {
+  YOUTUBE
+  INSTAGRAM
+  TIKTOK
+  FACEBOOK
+  TWITTER
+  UNKNOWN
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  EXPIRED
+}
+
+enum HistoryStatus {
+  COMPLETED
+  FAILED
+  EXPIRED
+}
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/fastdownloader"
+
+# Redis
+REDIS_URL="redis://localhost:6379"
+
+# Authentication
+AUTH_SECRET="your-auth-secret-key-here"
+
+# Next.js
+NEXT_PUBLIC_SITE_URL="http://localhost:3000"
+
+# Download Provider (Configure with your actual provider)
+DOWNLOAD_PROVIDER_URL="https://api.your-provider.com"
+DOWNLOAD_PROVIDER_KEY="your-provider-api-key"
+DOWNLOAD_PROVIDER_TYPE="y2mate" # or "savetube", "ssyoutube", etc.
+
+# Storage (S3 Compatible)
+STORAGE_ENDPOINT="https://s3.amazonaws.com"
+STORAGE_BUCKET="fastdownloader-temp"
+STORAGE_ACCESS_KEY="your-access-key"
+STORAGE_SECRET_KEY="your-secret-key"
+
+# Application Settings
+MAX_FILE_SIZE_MB="500"
+DOWNLOAD_TTL_SECONDS="3600" # 1 hour
+
+# AdSense (Optional)
+NEXT_PUBLIC_ADSENSE_CLIENT="ca-pub-xxxxxxxxxxxxxxxx"
+NEXT_PUBLIC_ADSENSE_SLOT="xxxxxxxxxx"
+
+# Rate Limiting
+RATE_LIMIT_ANALYZE="30" # per minute per IP
+RATE_LIMIT_DOWNLOAD="10" # per minute per IP
+
+# Queue Configuration
+QUEUE_CONCURRENCY="5"
+QUEUE_RETRY_ATTEMPTS="3"
+QUEUE_RETRY_DELAY="5000" # ms
+
+# Logging
+LOG_LEVEL="info"
+'use client';
+
+import { HeroSection } from '@/components/hero/HeroSection';
+import { FAQSection } from '@/components/faq/FAQSection';
+import { motion } from 'framer-motion';
+
+export default function Home() {
+  return (
+    <motion.main
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-gradient-to-b from-[#0a0a1a] via-[#0d0d2b] to-[#1a0a2e]"
+    >
+      <HeroSection />
+      
+      <section className="container mx-auto px-4 py-16">
+        <div className="grid md:grid-cols-4 gap-6 max-w-5xl mx-auto">
+          <FeatureCard
+            icon="🚀"
+            title="Fast Processing"
+            description="Download videos in seconds with our optimized pipeline"
+          />
+          <FeatureCard
+            icon="🔒"
+            title="Secure & Private"
+            description="All downloads are encrypted and temporary"
+          />
+          <FeatureCard
+            icon="🎯"
+            title="Multiple Platforms"
+            description="Support for YouTube, TikTok, Instagram and more"
+          />
+          <FeatureCard
+            icon="💎"
+            title="High Quality"
+            description="Download in up to 1080p with various formats"
+          />
+        </div>
+      </section>
+
+      <FAQSection />
+
+      <footer className="container mx-auto px-4 py-8 text-center text-gray-400 border-t border-white/5">
+        <p className="text-sm">
+          © 2024 FastDownloader. Only download content you have permission to download.
+        </p>
+      </footer>
+    </motion.main>
+  );
+}
+
+function FeatureCard({ icon, title, description }: { icon: string; title: string; description: string }) {
+  return (
+    <motion.div
+      whileHover={{ scale: 1.05, y: -5 }}
+      className="glass-card p-6 rounded-2xl text-center backdrop-blur-xl bg-white/5 border border-white/10"
+    >
+      <div className="text-4xl mb-3">{icon}</div>
+      <h3 className="text-white font-semibold mb-2">{title}</h3>
+      <p className="text-gray-300 text-sm">{description}</p>
+    </motion.div>
+  );
+}
+'use client';
+
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { UrlInput } from '@/components/url-input/UrlInput';
+import { Sparkles, Zap, Shield } from 'lucide-react';
+
+export function HeroSection() {
+  const [particles, setParticles] = useState<Array<{ x: number; y: number; size: number; duration: number }>>([]);
+
+  useEffect(() => {
+    const newParticles = Array.from({ length: 50 }, () => ({
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: Math.random() * 3 + 1,
+      duration: Math.random() * 20 + 10,
+    }));
+    setParticles(newParticles);
+  }, []);
+
+  return (
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4">
+      {/* Animated Background */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-500/10 via-cyan-500/5 to-transparent" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-purple-500/20 blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] rounded-full bg-cyan-500/10 blur-3xl animate-pulse delay-1000" />
+        
+        {/* Particles */}
+        {particles.map((particle, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full bg-white/20"
+            style={{
+              left: `${particle.x}%`,
+              top: `${particle.y}%`,
+              width: particle.size,
+              height: particle.size,
+            }}
+            animate={{
+              y: [0, -30, 0],
+              opacity: [0.2, 0.8, 0.2],
+            }}
+            transition={{
+              duration: particle.duration,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="relative z-10 max-w-4xl mx-auto text-center">
+        {/* Logo Badge */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-8"
+        >
+          <Zap className="w-4 h-4 text-yellow-400" />
+          <span className="text-sm text-gray-300">FastDownloader</span>
+        </motion.div>
+
+        {/* Heading */}
+        <motion.h1
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight"
+        >
+          Download Videos.
+          <br />
+          <span className="bg-gradient-to-r from-purple-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent">
+            Fast. Simple. Secure.
+          </span>
+        </motion.h1>
+
+        {/* Subtitle */}
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto"
+        >
+          Process supported video URLs with a fast, modern and secure downloading experience.
+        </motion.p>
+
+        {/* URL Input */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="glass-card p-6 rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 shadow-2xl"
+        >
+          <UrlInput />
+        </motion.div>
+
+        {/* Platform Icons */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="flex flex-wrap justify-center gap-4 mt-8"
+        >
+          {['YouTube', 'Instagram', 'TikTok', 'Facebook', 'X'].map((platform, i) => (
+            <motion.span
+              key={platform}
+              whileHover={{ scale: 1.1 }}
+              className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm text-gray-300 backdrop-blur-sm"
+            >
+              {platform}
+            </motion.span>
+          ))}
+        </motion.div>
+
+        {/* Trust Indicators */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
+          className="flex flex-wrap justify-center gap-6 mt-12 text-sm text-gray-400"
+        >
+          <span className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-green-400" />
+            Secure Processing
+          </span>
+          <span className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-purple-400" />
+            Temporary Storage
+          </span>
+          <span className="text-gray-500">|</span>
+          <span className="text-gray-500">Free to use</span>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+'use client';
+
+import { useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Send, Loader2, AlertCircle, CheckCircle2, Video, Music2 } from 'lucide-react';
+import { PlatformBadge } from './PlatformBadge';
+import { ProcessingCard } from '@/components/processing/ProcessingCard';
+import { ResultCard } from '@/components/result/ResultCard';
+import { toast } from 'react-hot-toast';
+import { detectPlatform } from '@/lib/utils/helpers';
+import type { Platform } from '@prisma/client';
+
+export function UrlInput() {
+  const [url, setUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [platform, setPlatform] = useState<Platform | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [result, setResult] = useState<any>(null);
+  const [status, setStatus] = useState<'idle' | 'analyzing' | 'detected' | 'queued' | 'processing' | 'completed' | 'failed'>('idle');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!url.trim()) {
+      toast.error('Please paste a valid URL');
+      return;
+    }
+
+    setLoading(true);
+    setStatus('analyzing');
+    setPlatform(null);
+
+    try {
+      // Detect platform on client side
+      const detected = detectPlatform(url);
+      setPlatform(detected);
+      setStatus('detected');
+
+      // Send to backend
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, platform: detected }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to analyze URL');
+      }
+
+      setJobId(data.jobId);
+      setStatus('queued');
+
+      // Poll for job status
+      await pollJobStatus(data.jobId);
+
+    } catch (error: any) {
+      console.error('Download error:', error);
+      setStatus('failed');
+      toast.error(error.message || 'Failed to process URL');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const pollJobStatus = async (jobId: string) => {
+    let attempts = 0;
+    const maxAttempts = 60; // 60 seconds timeout
+
+    while (attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const response = await fetch(`/api/download/${jobId}`);
+      const data = await response.json();
+
+      if (data.status === 'COMPLETED') {
+        setStatus('completed');
+        setResult(data.result);
+        toast.success('Video ready for download!');
+        return;
+      } else if (data.status === 'FAILED') {
+        setStatus('failed');
+        toast.error(data.error || 'Processing failed');
+        return;
+      } else if (data.status === 'PROCESSING') {
+        setStatus('processing');
+      }
+
+      attempts++;
+    }
+
+    setStatus('failed');
+    toast.error('Processing timed out');
+  };
+
+  const handleReset = () => {
+    setUrl('');
+    setPlatform(null);
+    setResult(null);
+    setStatus('idle');
+    setJobId(null);
+    inputRef.current?.focus();
+  };
+
+  return (
+    <div className="w-full max-w-3xl mx-auto">
+      <form onSubmit={handleSubmit} className="relative">
+        <div className="relative">
+          <input
+            ref={inputRef}
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="Paste video URL here..."
+            className="w-full px-6 py-4 pr-36 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-all text-lg backdrop-blur-sm"
+            disabled={loading}
+          />
+          
+          <motion.button
+            type="submit"
+            disabled={loading || !url.trim()}
+            className="absolute right-2 top-1/2 -translate-y-1/2 px-6 py-2 bg-gradient-to-r from-purple-600 to-cyan-600 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-purple-500/25 transition-all"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {loading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <>
+                <Send className="w-5 h-5 inline mr-2" />
+                Analyze
+              </>
+            )}
+          </motion.button>
+        </div>
+      </form>
+
+      {/* Platform Badge */}
+      <AnimatePresence>
+        {platform && status !== 'idle' && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mt-4"
+          >
+            <PlatformBadge platform={platform} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Processing Status */}
+      <AnimatePresence>
+        {status !== 'idle' && status !== 'completed' && !result && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="mt-6"
+          >
+            <ProcessingCard status={status} platform={platform} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Result */}
+      <AnimatePresence>
+        {result && status === 'completed' && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -30 }}
+            className="mt-6"
+          >
+            <ResultCard result={result} onReset={handleReset} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+import { Platform } from '@prisma/client';
+
+export function detectPlatform(url: string): Platform {
+  const lower = url.toLowerCase();
+  
+  if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
+    return Platform.YOUTUBE;
+  }
+  if (lower.includes('instagram.com')) {
+    return Platform.INSTAGRAM;
+  }
+  if (lower.includes('tiktok.com')) {
+    return Platform.TIKTOK;
+  }
+  if (lower.includes('facebook.com') || lower.includes('fb.com')) {
+    return Platform.FACEBOOK;
+  }
+  if (lower.includes('x.com') || lower.includes('twitter.com')) {
+    return Platform.TWITTER;
+  }
+  return Platform.UNKNOWN;
+}
+
+export function getPlatformIcon(platform: Platform): string {
+  const icons = {
+    [Platform.YOUTUBE]: '▶️',
+    [Platform.INSTAGRAM]: '📸',
+    [Platform.TIKTOK]: '🎵',
+    [Platform.FACEBOOK]: '👤',
+    [Platform.TWITTER]: '🐦',
+    [Platform.UNKNOWN]: '❓',
+  };
+  return icons[platform] || '📹';
+}
+
+export function getPlatformColor(platform: Platform): string {
+  const colors = {
+    [Platform.YOUTUBE]: 'from-red-500 to-red-600',
+    [Platform.INSTAGRAM]: 'from-pink-500 to-orange-500',
+    [Platform.TIKTOK]: 'from-blue-500 to-purple-500',
+    [Platform.FACEBOOK]: 'from-blue-600 to-blue-700',
+    [Platform.TWITTER]: 'from-gray-600 to-gray-700',
+    [Platform.UNKNOWN]: 'from-gray-500 to-gray-600',
+  };
+  return colors[platform] || 'from-gray-500 to-gray-600';
+}
+
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
+  return (bytes / 1073741824).toFixed(1) + ' GB';
+}
+
+export function generateJobId(): string {
+  return `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+export function isValidUrl(string: string): boolean {
+  try {
+    new URL(string);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function getStatusMessage(status: string, platform?: Platform): string {
+  const messages = {
+    analyzing: 'Analyzing URL...',
+    detected: `Detected ${platform || 'video'} platform`,
+    queued: 'Creating download job...',
+    processing: 'Processing media...',
+    completed: 'Preparing secure download...',
+    failed: 'Processing failed',
+    expired: 'Download link expired',
+  };
+  return messages[status as keyof typeof messages] || status;
+}
+
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { PrismaClient } from '@prisma/client';
+import { redis } from '@/lib/redis/client';
+import { downloadQueue } from '@/lib/queue';
+import { rateLimit } from '@/lib/rate-limit';
+import { isValidUrl, detectPlatform } from '@/lib/utils/helpers';
+import { logger } from '@/lib/utils/logger';
+
+const prisma = new PrismaClient();
+const analyzeSchema = z.object({
+  url: z.string().url(),
+  platform: z.string().optional(),
+});
+
+export async function POST(req: NextRequest) {
+  try {
+    // Rate limiting
+    const ip = req.headers.get('x-forwarded-for') || 'unknown';
+    const limited = await rateLimit(ip, 'analyze');
+    if (limited) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
+    // Parse and validate
+    const body = await req.json();
+    const { url, platform: clientPlatform } = analyzeSchema.parse(body);
+
+    if (!isValidUrl(url)) {
+      return NextResponse.json(
+        { error: 'Invalid URL provided' },
+        { status: 400 }
+      );
+    }
+
+    // Detect platform (never trust client)
+    const detectedPlatform = detectPlatform(url);
+    
+    if (detectedPlatform === 'UNKNOWN') {
+      return NextResponse.json(
+        { error: 'Unsupported platform. Please check the URL.' },
+        { status: 400 }
+      );
+    }
+
+    // Check if provider is configured
+    if (!process.env.DOWNLOAD_PROVIDER_URL) {
+      return NextResponse.json(
+        { error: 'Media provider is not configured yet.' },
+        { status: 503 }
+      );
+    }
+
+    // Create job in database
+    const job = await prisma.downloadJob.create({
+      data: {
+        sourceUrl: url,
+        platform: detectedPlatform,
+        status: 'PENDING',
+        // If authenticated user, associate with user
+      },
+    });
+
+    // Add to BullMQ queue
+    await downloadQueue.add('download-video', {
+      jobId: job.id,
+      url,
+      platform: detectedPlatform,
+    });
+
+    logger.info(`Job created: ${job.id} for ${detectedPlatform}`);
+
+    return NextResponse.json({
+      jobId: job.id,
+      platform: detectedPlatform,
+      status: job.status,
+    });
+
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid request data' },
+        { status: 400 }
+      );
+    }
+    
+    logger.error('Analyze error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+import { Worker } from 'bullmq';
+import { redis } from '@/lib/redis/client';
+import { PrismaClient } from '@prisma/client';
+import { getProvider } from '@/lib/providers';
+import { logger } from '@/lib/utils/logger';
+import { s3Storage } from '@/lib/storage/s3-storage';
+
+const prisma = new PrismaClient();
+
+const worker = new Worker(
+  'download-queue',
+  async (job) => {
+    const { jobId, url, platform } = job.data;
+    
+    try {
+      logger.info(`Processing job ${jobId}`);
+      
+      // Update status
+      await prisma.downloadJob.update({
+        where: { id: jobId },
+        data: { status: 'PROCESSING' },
+      });
+
+      // Get provider
+      const provider = getProvider(platform);
+      if (!provider) {
+        throw new Error(`No provider configured for ${platform}`);
+      }
+
+      // Process with provider
+      const result = await provider.process(url);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Provider processing failed');
+      }
+
+      // Generate temporary download URL
+      const downloadUrl = await s3Storage.generateSignedUrl(
+        result.fileKey,
+        parseInt(process.env.DOWNLOAD_TTL_SECONDS || '3600')
+      );
+
+      // Update job
+      await prisma.downloadJob.update({
+        where: { id: jobId },
+        data: {
+          status: 'COMPLETED',
+          downloadUrl,
+          expiresAt: new Date(Date.now() + parseInt(process.env.DOWNLOAD_TTL_SECONDS || '3600') * 1000),
+          metadata: result.metadata,
+          quality: result.quality,
+          format: result.format,
+        },
+      });
+
+      // Create history entry if user exists
+      // ...
+
+      logger.info(`Job ${jobId} completed successfully`);
+
+    } catch (error) {
+      logger.error(`Job ${jobId} failed:`, error);
+      
+      await prisma.downloadJob.update({
+        where: { id: jobId },
+        data: {
+          status: 'FAILED',
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
+      
+      throw error;
+    }
+  },
+  {
+    connection: redis,
+    concurrency: parseInt(process.env.QUEUE_CONCURRENCY || '5'),
+    settings: {
+      retryDelay: parseInt(process.env.QUEUE_RETRY_DELAY || '5000'),
+      maxStalledCount: parseInt(process.env.QUEUE_RETRY_ATTEMPTS || '3'),
+    },
+  }
+);
+
+worker.on('completed', (job) => {
+  logger.info(`Job ${job.id} completed`);
+});
+
+worker.on('failed', (job, err) => {
+  logger.error(`Job ${job?.id} failed:`, err);
+});
+
+process.on('SIGTERM', async () => {
+  await worker.close();
+});
+
+export default worker;
+
+
+export interface ProviderResult {
+  success: boolean;
+  error?: string;
+  fileKey?: string;
+  downloadUrl?: string;
+  metadata?: {
+    title?: string;
+    thumbnail?: string;
+    duration?: string;
+    author?: string;
+  };
+  quality?: string;
+  format?: string;
+  availableQualities?: string[];
+  availableFormats?: string[];
+}
+
+export interface VideoProvider {
+  process(url: string): Promise<ProviderResult>;
+  getPlatform(): string;
+}
+
+export abstract class BaseProvider implements VideoProvider {
+  abstract process(url: string): Promise<ProviderResult>;
+  abstract getPlatform(): string;
+  
+  protected validateUrl(url: string): boolean {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  
+  protected async fetchWithRetry(url: string, options: RequestInit = {}, maxRetries = 3): Promise<Response> {
+    let lastError: Error | null = null;
+    
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        const response = await fetch(url, {
+          ...options,
+          headers: {
+            'User-Agent': 'FastDownloader/1.0',
+            ...options.headers,
+          },
+        });
+        
+        if (response.ok) {
+          return response;
+        }
+        
+        // Don't retry on client errors (4xx)
+        if (response.status >= 400 && response.status < 500) {
+          return response;
+        }
+        
+        // Wait with exponential backoff
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+      } catch (error) {
+        lastError = error as Error;
+      }
+    }
+    
+    throw lastError || new Error('Max retries exceeded');
+  }
+}
+import { BaseProvider, ProviderResult } from './base-provider';
+import { logger } from '@/lib/utils/logger';
+
+export class YouTubeProvider extends BaseProvider {
+  getPlatform(): string {
+    return 'YOUTUBE';
+  }
+  
+  async process(url: string): Promise<ProviderResult> {
+    try {
+      if (!this.validateUrl(url)) {
+        return {
+          success: false,
+          error: 'Invalid YouTube URL',
+        };
+      }
+      
+      // Use the configured download provider API
+      const apiUrl = process.env.DOWNLOAD_PROVIDER_URL;
+      const apiKey = process.env.DOWNLOAD_PROVIDER_KEY;
+      
+      if (!apiUrl || !apiKey) {
+        return {
+          success: false,
+          error: 'Download provider not configured',
+        };
+      }
+      
+      // Call the provider API
+      const response = await this.fetchWithRetry(`${apiUrl}/api/download`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          url,
+          platform: 'youtube',
+        }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        return {
+          success: false,
+          error: error.message || `Provider error: ${response.status}`,
+        };
+      }
+      
+      const data = await response.json();
+      
+      // Map provider response to our format
+      return {
+        success: true,
+        fileKey: data.fileKey || data.id,
+        metadata: {
+          title: data.title || 'Untitled',
+          thumbnail: data.thumbnail,
+          duration: data.duration,
+          author: data.author,
+        },
+        quality: data.quality || '720p',
+        format: data.format || 'mp4',
+        availableQualities: data.qualities || ['720p', '480p', '360p'],
+        availableFormats: data.formats || ['mp4', 'mp3'],
+      };
+      
+    } catch (error) {
+      logger.error('YouTube provider error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Processing failed',
+      };
+    }
+  }
+
+import { VideoProvider } from './base-provider';
+import { YouTubeProvider } from './youtube-provider';
+import { Platform } from '@prisma/client';
+
+// Placeholder providers for other platforms
+class InstagramProvider extends YouTubeProvider {
+  getPlatform(): string {
+    return 'INSTAGRAM';
+  }
+}
+
+class TikTokProvider extends YouTubeProvider {
+  getPlatform(): string {
+    return 'TIKTOK';
+  }
+}
+
+class FacebookProvider extends YouTubeProvider {
+  getPlatform(): string {
+    return 'FACEBOOK';
+  }
+}
+
+class TwitterProvider extends YouTubeProvider {
+  getPlatform(): string {
+    return 'TWITTER';
+  }
+}
+
+const providers: Record<string, VideoProvider> = {
+  [Platform.YOUTUBE]: new YouTubeProvider(),
+  [Platform.INSTAGRAM]: new InstagramProvider(),
+  [Platform.TIKTOK]: new TikTokProvider(),
+  [Platform.FACEBOOK]: new FacebookProvider(),
+  [Platform.TWITTER]: new TwitterProvider(),
+};
+
+export function getProvider(platform: Platform): VideoProvider | null {
+  return providers[platform] || null;
+}
+
+export function getAvailablePlatforms(): Platform[] {
+  return Object.keys(providers) as Platform[];
+}
+}
+import { redis } from '@/lib/redis/client';
+
+interface RateLimitConfig {
+  limit: number; // Number of requests
+  window: number; // Time window in seconds
+}
+
+const defaultConfigs: Record<string, RateLimitConfig> = {
+  analyze: {
+    limit: parseInt(process.env.RATE_LIMIT_ANALYZE || '30'),
+    window: 60,
+  },
+  download: {
+    limit: parseInt(process.env.RATE_LIMIT_DOWNLOAD || '10'),
+    window: 60,
+  },
+};
+
+export async function rateLimit(
+  identifier: string,
+  type: 'analyze' | 'download',
+  config?: RateLimitConfig
+): Promise<boolean> {
+  const cfg = config || defaultConfigs[type];
+  const key = `ratelimit:${type}:${identifier}`;
+  
+  try {
+    const current = await redis.get(key);
+    const count = current ? parseInt(current) : 0;
+    
+    if (count >= cfg.limit) {
+      return true; // Rate limited
+    }
+    
+    // Increment and set expiry
+    const pipeline = redis.pipeline();
+    pipeline.incr(key);
+    pipeline.expire(key, cfg.window);
+    await pipeline.exec();
+    
+    return false;
+  } catch (error) {
+    console.error('Rate limit error:', error);
+    return false; // Fail open on Redis errors
+  }
+}
+
+export async function getRateLimitInfo(
+  identifier: string,
+  type: 'analyze' | 'download'
+): Promise<{ remaining: number; limit: number; reset: number }> {
+  const cfg = defaultConfigs[type];
+  const key = `ratelimit:${type}:${identifier}`;
+  
+  try {
+    const [count, ttl] = await Promise.all([
+      redis.get(key).then(v => v ? parseInt(v) : 0),
+      redis.ttl(key).then(v => v > 0 ? v : 0),
+    ]);
+    
+    return {
+      remaining: Math.max(0, cfg.limit - count),
+      limit: cfg.limit,
+      reset: Math.floor(Date.now() / 1000) + ttl,
+    };
+  } catch {
+    return {
+      remaining: cfg.limit,
+      limit: cfg.limit,
+      reset: Math.floor(Date.now() / 1000) + cfg.window,
+    };
+  }
+}
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { v4 as uuidv4 } from 'uuid';
+import { logger } from '@/lib/utils/logger';
+
+class S3Storage {
+  private client: S3Client;
+  private bucket: string;
+  
+  constructor() {
+    this.bucket = process.env.STORAGE_BUCKET || 'fastdownloader-temp';
+    this.client = new S3Client({
+      endpoint: process.env.STORAGE_ENDPOINT || 'https://s3.amazonaws.com',
+      credentials: {
+        accessKeyId: process.env.STORAGE_ACCESS_KEY || '',
+        secretAccessKey: process.env.STORAGE_SECRET_KEY || '',
+      },
+      region: process.env.STORAGE_REGION || 'us-east-1',
+    });
+  }
+  
+  async uploadFile(data: Buffer, mimeType: string, prefix: string = 'downloads'): Promise<string> {
+    try {
+      const key = `${prefix}/${uuidv4()}`;
+      const command = new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: data,
+        ContentType: mimeType,
+        Metadata: {
+          uploadedAt: new Date().toISOString(),
+        },
+      });
+      
+      await this.client.send(command);
+      logger.info(`File uploaded: ${key}`);
+      return key;
+    } catch (error) {
+      logger.error('S3 upload error:', error);
+      throw new Error('Failed to upload file');
+    }
+  }
+  
+  async generateSignedUrl(key: string, expiresIn: number = 3600): Promise<string> {
+    try {
+      const command = new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      });
+      
+      const url = await getSignedUrl(this.client, command, { expiresIn });
+      return url;
+    } catch (error) {
+      logger.error('S3 sign URL error:', error);
+      throw new Error('Failed to generate download URL');
+    }
+  }
+  
+  async deleteFile(key: string): Promise<void> {
+    try {
+      const command = new DeleteObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      });
+      
+      await this.client.send(command);
+      logger.info(`File deleted: ${key}`);
+    } catch (error) {
+      logger.error('S3 delete error:', error);
+    }
+  }
+  
+  async cleanupExpiredFiles(): Promise<void> {
+    // Implementation for cleaning up expired files
+    // This would typically be run by a cron job
+    try {
+      // List all files older than TTL and delete them
+      logger.info('Cleaning up expired files...');
+    } catch (error) {
+      logger.error('Cleanup error:', error);
+    }
+  }
+}
+
+export const s3Storage = new S3Storage();
+import Redis from 'ioredis';
+
+let redis: Redis;
+
+if (process.env.REDIS_URL) {
+  redis = new Redis(process.env.REDIS_URL);
+} else {
+  // Development fallback
+  redis = new Redis({
+    host: 'localhost',
+    port: 6379,
+    maxRetriesPerRequest: 3,
+  });
+}
+
+redis.on('connect', () => {
+  console.log('Redis connected');
+});
+
+redis.on('error', (error) => {
+  console.error('Redis error:', error);
+});
+
+export { redis };
+import { Queue } from 'bullmq';
+import { redis } from '@/lib/redis/client';
+
+export const downloadQueue = new Queue('download-queue', {
+  connection: redis,
+  defaultJobOptions: {
+    attempts: parseInt(process.env.QUEUE_RETRY_ATTEMPTS || '3'),
+    backoff: {
+      type: 'exponential',
+      delay: parseInt(process.env.QUEUE_RETRY_DELAY || '5000'),
+    },
+    removeOnComplete: {
+      age: 3600, // Keep for 1 hour
+      count: 1000,
+    },
+    removeOnFail: {
+      age: 86400, // Keep for 24 hours
+    },
+  },
+});
+
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          50: '#f5f3ff',
+          100: '#ede9fe',
+          200: '#ddd6fe',
+          300: '#c4b5fd',
+          400: '#a78bfa',
+          500: '#8b5cf6',
+          600: '#7c3aed',
+          700: '#6d28d9',
+          800: '#5b21b6',
+          900: '#4c1d95',
+        },
+        secondary: {
+          50: '#ecfeff',
+          100: '#cffafe',
+          200: '#a5f3fc',
+          300: '#67e8f9',
+          400: '#22d3ee',
+          500: '#06b6d4',
+          600: '#0891b2',
+          700: '#0e7490',
+          800: '#155e75',
+          900: '#164e63',
+        },
+      },
+      animation: {
+        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'float': 'float 6s ease-in-out infinite',
+      },
+      keyframes: {
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-20px)' },
+        },
+      },
+    },
+  },
+  plugins: [],
+};
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#0a0a1a] text-white antialiased;
+  }
+  
+  ::selection {
+    @apply bg-purple-500/30 text-white;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply backdrop-blur-xl bg-white/5 border border-white/10 shadow-2xl;
+  }
+  
+  .glass-card-hover {
+    @apply hover:bg-white/10 transition-all duration-300;
+  }
+  
+  .gradient-text {
+    @apply bg-gradient-to-r from-purple-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent;
+  }
+  
+  .glow-effect {
+    @apply relative after:absolute after:inset-0 after:rounded-full after:bg-purple-500/20 after:blur-2xl after:-z-10;
+  }
+  
+  .neon-border {
+    @apply border border-purple-500/30 shadow-[0_0_15px_rgba(139,92,246,0.15)];
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-[#0a0a1a];
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-purple-500/30 rounded-full hover:bg-purple-500/50 transition-colors;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { rateLimit } from '@/lib/rate-limit';
+
+export async function middleware(request: NextRequest) {
+  const response = NextResponse.next();
+  
+  // Security headers
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('X-XSS-Protection', '1; mode=block');
+  
+  // CORS for API routes
+  if (request.nextUrl.pathname.startsWith('/api/')) {
+    response.headers.set('Access-Control-Allow-Origin', process.env.NEXT_PUBLIC_SITE_URL || '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  }
+  
+  // Rate limiting for API
+  if (request.nextUrl.pathname.startsWith('/api/')) {
+    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    const path = request.nextUrl.pathname;
+    
+    // Apply stricter limits to download endpoints
+    if (path.startsWith('/api/download')) {
+      const limited = await rateLimit(ip, 'download');
+      if (limited) {
+        return new NextResponse('Too Many Requests', { status: 429 });
+      }
+    }
+  }
+  
+  return response;
+}
+
+export const config = {
+  matcher: [
+    '/api/:path*',
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt).*)',
+  ],
+};
+'use client';
+
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Download, X, Clock, User, Film, RotateCcw } from 'lucide-react';
+import { getPlatformIcon, formatFileSize } from '@/lib/utils/helpers';
+import { toast } from 'react-hot-toast';
+
+interface ResultCardProps {
+  result: any;
+  onReset: () => void;
+}
+
+export function ResultCard({ result, onReset }: ResultCardProps) {
+  const [selectedQuality, setSelectedQuality] = useState(result.quality || '720p');
+  const [selectedFormat, setSelectedFormat] = useState(result.format || 'mp4');
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      const response = await fetch(`/api/download/${result.jobId}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      if (!response.ok) throw new Error('Download failed');
+      
+      const data = await response.json();
+      
+      // Trigger download
+      const link = document.createElement('a');
+      link.href = data.downloadUrl;
+      link.download = `${result.title || 'video'}.${selectedFormat}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success('Download started!');
+    } catch (error) {
+      toast.error('Failed to download');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="glass-card rounded-2xl overflow-hidden border border-white/10"
+    >
+      <div className="flex flex-col md:flex-row">
+        {/* Thumbnail */}
+        {result.thumbnail && (
+          <div className="relative md:w-64 lg:w-80 flex-shrink-0 bg-black/20">
+            <img
+              src={result.thumbnail}
+              alt={result.title}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+            {result.duration && (
+              <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/70 rounded text-xs">
+                {result.duration}
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Content */}
+        <div className="flex-1 p-6">
+          {/* Platform badge */}
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xl">
+              {getPlatformIcon(result.platform)}
+            </span>
+            <span className="text-sm text-gray-400">{result.platform}</span>
+          </div>
+          
+          {/* Title */}
+          <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">
+            {result.title || 'Untitled Video'}
+          </h3>
+          
+          {/* Metadata */}
+          <div className="flex flex-wrap gap-4 text-sm text-gray-400 mb-4">
+            {result.author && (
+              <span className="flex items-center gap-1">
+                <User className="w-4 h-4" />
+                {result.author}
+              </span>
+            )}
+            {result.size && (
+              <span className="flex items-center gap-1">
+                <Film className="w-4 h-4" />
+                {formatFileSize(result.size)}
+              </span>
+            )}
+          </div>
+          
+          {/* Options */}
+          <div className="flex flex-wrap gap-4 mb-6">
+            {/* Quality selector */}
+            {result.availableQualities && result.availableQualities.length > 0 && (
+              <div className="flex-1 min-w-[120px]">
+                <label className="text-xs text-gray-400 block mb-1">Quality</label>
+                <select
+                  value={selectedQuality}
+                  onChange={(e) => setSelectedQuality(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-purple-500 outline-none"
+                >
+                  {result.availableQualities.map((q: string) => (
+                    <option key={q} value={q}>{q}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            
+            {/* Format selector */}
+            {result.availableFormats && result.availableFormats.length > 0 && (
+              <div className="flex-1 min-w-[120px]">
+                <label className="text-xs text-gray-400 block mb-1">Format</label>
+                <select
+                  value={selectedFormat}
+                  onChange={(e) => setSelectedFormat(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-purple-500 outline-none"
+                >
+                  {result.availableFormats.map((f: string) => (
+                    <option key={f} value={f}>{f.toUpperCase()}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+          
+          {/* Actions */}
+          <div className="flex flex-wrap gap-3">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleDownload}
+              disabled={downloading}
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl text-white font-medium hover:shadow-lg hover:shadow-purple-500/25 transition-all disabled:opacity-50"
+            >
+              {downloading ? (
+                'Preparing...'
+              ) : (
+                <>
+                  <Download className="w-5 h-5 inline mr-2" />
+                  Download
+                </>
+              )}
+            </motion.button>
+            
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onReset}
+              className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-gray-400 hover:text-white transition-colors"
+            >
+              <RotateCcw className="w-5 h-5" />
+            </motion.button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+'use client';
+
+import { motion } from 'framer-motion';
+import { Loader2, CheckCircle2, AlertCircle, Clock, Zap } from 'lucide-react';
+import { getPlatformIcon, getStatusMessage } from '@/lib/utils/helpers';
+import type { Platform } from '@prisma/client';
+
+interface ProcessingCardProps {
+  status: 'analyzing' | 'detected' | 'queued' | 'processing' | 'completed' | 'failed';
+  platform: Platform | null;
+}
+
+export function ProcessingCard({ status, platform }: ProcessingCardProps) {
+  const steps = [
+    { key: 'analyzing', label: 'Analyzing URL', icon: Zap },
+    { key: 'detected', label: `Detected ${platform || 'video'} platform`, icon: CheckCircle2 },
+    { key: 'queued', label: 'Creating download job', icon: Clock },
+    { key: 'processing', label: 'Processing media', icon: Loader2 },
+    { key: 'completed', label: 'Preparing download', icon: CheckCircle2 },
+  ];
+
+  const currentStepIndex = steps.findIndex(s => s.key === status);
+  const isFailed = status === 'failed';
+  const isComplete = status === 'completed';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="glass-card rounded-2xl p-6 border border-white/10"
+    >
+      <div className="flex items-center gap-3 mb-4">
+        {platform && (
+          <span className="text-2xl">{getPlatformIcon(platform)}</span>
+        )}
+        <h3 className="text-white font-semibold">
+          {isFailed ? 'Processing Failed' : 'Processing Video'}
+        </h3>
+        {!isFailed && !isComplete && (
+          <div className="ml-auto">
+            <Loader2 className="w-5 h-5 text-purple-400 animate-spin" />
+          </div>
+        )}
+        {isComplete && (
+          <CheckCircle2 className="w-5 h-5 text-green-400 ml-auto" />
+        )}
+        {isFailed && (
+          <AlertCircle className="w-5 h-5 text-red-400 ml-auto" />
+        )}
+      </div>
+
+      {/* Progress steps */}
+      <div className="space-y-3">
+        {steps.map((step, index) => {
+          const isActive = index === currentStepIndex;
+          const isPast = index < currentStepIndex;
+          const isFuture = index > currentStepIndex;
+          
+          if (isFailed && index > currentStepIndex) return null;
+          if (isComplete && index > currentStepIndex) return null;
+          
+          const Icon = step.icon;
+          
+          return (
+            <motion.div
+              key={step.key}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${
+                isActive ? 'bg-white/5' : ''
+              } ${
+                isPast ? 'text-green-400' : ''
+              } ${
+                isFuture ? 'text-gray-500' : ''
+              }`}
+            >
+              <div className="w-6 h-6 flex items-center justify-center">
+                {isPast ? (
+                  <CheckCircle2 className="w-5 h-5 text-green-400" />
+                ) : isActive && !isComplete ? (
+                  <Loader2 className="w-5 h-5 animate-spin text-purple-400" />
+                ) : (
+                  <Icon className="w-5 h-5" />
+                )}
+              </div>
+              <span className={isActive ? 'text-white' : ''}>
+                {step.label}
+              </span>
+            </motion.div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: fastdownloader-postgres
+    environment:
+      POSTGRES_USER: fastdownloader
+      POSTGRES_PASSWORD: fastdownloader_pass
+      POSTGRES_DB: fastdownloader
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fastdownloader"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: fastdownloader-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: development
+    container_name: fastdownloader-app
+    environment:
+      DATABASE_URL: postgresql://fastdownloader:fastdownloader_pass@postgres:5432/fastdownloader
+      REDIS_URL: redis://redis:6379
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: ${AUTH_SECRET}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ..:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run dev
+
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: development
+    container_name: fastdownloader-worker
+    environment:
+      DATABASE_URL: postgresql://fastdownloader:fastdownloader_pass@postgres:5432/fastdownloader
+      REDIS_URL: redis://redis:6379
+    volumes:
+      - ..:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run worker
+
+volumes:
+  postgres_data:
+  redis_data:
+FROM node:20-alpine AS base
+
+# Dependencies
+FROM base AS deps
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Builder
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build
+
+# Development
+FROM base AS development
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+EXPOSE 3000
+CMD ["npm", "run", "dev"]
+
+# Production
+FROM base AS production
+WORKDIR /app
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/package*.json ./
+COPY --from=deps /app/node_modules ./node_modules
+EXPOSE 3000
+CMD ["npm", "start"]
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  swcMinify: true,
+  images: {
+    domains: ['localhost', 'fastdownloader.com', '*.s3.amazonaws.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.s3.amazonaws.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'img.youtube.com',
+      },
+    ],
+  },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on',
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin',
+          },
+        ],
+      },
+    ];
+  },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+      };
+    }
+    return config;
+  },
+};
+
+module.exports = nextConfig;
+# FastDownloader
+
+> A premium video downloader web application with support for YouTube, TikTok, Instagram, Facebook, and X.
+
+## Features
+
+- 🚀 **Fast Processing**: Download videos in seconds with our optimized pipeline
+- 🔒 **Secure & Private**: All downloads are encrypted and temporary
+- 🎯 **Multiple Platforms**: Support for YouTube, TikTok, Instagram, Facebook, and X
+- 💎 **High Quality**: Download in up to 1080p with various formats
+- 🎨 **Modern UI**: Beautiful 3D glassmorphism design with smooth animations
+- 📱 **Responsive**: Works perfectly on all devices
+
+## Tech Stack
+
+- **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS
+- **Backend**: Next.js API routes, Node.js
+- **Database**: PostgreSQL with Prisma ORM
+- **Queue**: BullMQ with Redis
+- **Storage**: S3-compatible object storage
+- **Container**: Docker & Docker Compose
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL
+- Redis
+- Docker (optional)
+
+### Environment Setup
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/fastdownloader.git
+   cd fastdownloader
+cp .env.example .env
+npm install
+npx prisma db push
+npx prisma generate
+npm run dev
+docker-compose up -d
+npm run build
+npm start
+docker-compose -f docker/docker-compose.yml up -d
